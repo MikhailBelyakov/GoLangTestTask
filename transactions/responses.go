@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"time"
 )
 
 type TransactionsStruct struct {
@@ -19,7 +18,7 @@ type TransactionStruct struct {
 
 type TransactionResponse struct {
 	Amount     float64                 `json:"amount"`
-	Date       time.Time               `json:"date"`
+	Date       string                  `json:"date"`
 	ReceiverId uint                    `json:"receiverId"`
 	SenderId   uint                    `json:"senderId"`
 	Type       TransactionTypeResponse `json:"type"`
@@ -50,7 +49,7 @@ func (s *TransactionStruct) Response() TransactionResponse {
 		Amount:     actualAmount,
 		ReceiverId: s.ReceiverId,
 		SenderId:   s.SenderId,
-		Date:       s.Date,
+		Date:       s.Date.Format("01.02.2006 03:04"),
 		Type: TransactionTypeResponse{
 			Id:    s.TypeID,
 			Value: operationText,
