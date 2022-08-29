@@ -18,12 +18,16 @@ type TransactionStruct struct {
 }
 
 type TransactionResponse struct {
-	Amount     float64   `json:"amount"`
-	Type       string    `json:"type"`
-	TypeId     int       `json:"typeId"`
-	Date       time.Time `json:"date"`
-	ReceiverId uint      `json:"receiverId"`
-	SenderId   uint      `json:"senderId"`
+	Amount     float64                 `json:"amount"`
+	Date       time.Time               `json:"date"`
+	ReceiverId uint                    `json:"receiverId"`
+	SenderId   uint                    `json:"senderId"`
+	Type       TransactionTypeResponse `json:"type"`
+}
+
+type TransactionTypeResponse struct {
+	Id    int    `json:"id"`
+	Value string `json:"value"`
 }
 
 func (s *TransactionsStruct) Response() []TransactionResponse {
@@ -44,11 +48,13 @@ func (s *TransactionStruct) Response() TransactionResponse {
 
 	response := TransactionResponse{
 		Amount:     actualAmount,
-		TypeId:     s.TypeID,
-		Type:       operationText,
 		ReceiverId: s.ReceiverId,
 		SenderId:   s.SenderId,
 		Date:       s.Date,
+		Type: TransactionTypeResponse{
+			Id:    s.TypeID,
+			Value: operationText,
+		},
 	}
 	return response
 }

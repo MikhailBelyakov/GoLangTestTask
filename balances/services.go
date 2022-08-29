@@ -19,7 +19,7 @@ func Sub(paramStruct ChangeParamStruct) (string, int, error) {
 	err := getBalance(paramStruct.userId, balanceModel)
 
 	if err != nil {
-		return userNotFoundMessage, http.StatusNotFound, err
+		return users.UserNotFoundMessage, http.StatusNotFound, err
 	}
 
 	if uint32(paramStruct.amount*100) > balanceModel.Amount {
@@ -52,7 +52,7 @@ func Add(paramStruct ChangeParamStruct) (string, int, error) {
 	err := getBalance(paramStruct.userId, balanceModel)
 
 	if err != nil {
-		return userNotFoundMessage, http.StatusNotFound, err
+		return users.UserNotFoundMessage, http.StatusNotFound, err
 	}
 
 	newBalance := balanceModel.Amount + uint32(paramStruct.amount*100)

@@ -3,6 +3,7 @@ package balances
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"testGoProject/users"
 )
 
 func UserBalance(router *gin.RouterGroup) {
@@ -34,7 +35,7 @@ func getUserBalance(context *gin.Context) {
 	err = GetBalanceByUser(inputParam, response)
 
 	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{"message": userNotFoundMessage})
+		context.JSON(http.StatusNotFound, gin.H{"message": users.UserNotFoundMessage})
 		return
 	}
 

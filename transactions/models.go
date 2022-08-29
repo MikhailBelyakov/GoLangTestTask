@@ -34,13 +34,13 @@ func AutoMigrate() {
 }
 
 // 	Получаем транзакции пользователя
-func FindTransactionsByUser(userModel users.UserModel) []TransactionModel {
+func FindTransactionsByUser(userModel users.UserModel, condition GetTransactionParamStruct) []TransactionModel {
 	var transactionModels []TransactionModel
 
 	db := common.GetDB()
 	db.Where(&TransactionModel{
 		UserID: userModel.ID,
-	}).Find(&transactionModels)
+	}).Limit(condition.Limit).Order(condition.Order + " " + condition.Sort).Offset(condition.Offset).Find(&transactionModels)
 
 	return transactionModels
 }

@@ -11,5 +11,5 @@ func GetTransactionsByUser(paramStruct GetTransactionParamStruct) ([]Transaction
 		return []TransactionModel{}, err
 	}
 
-	return FindTransactionsByUser(userModel), nil
+	return FindTransactionsByUser(userModel, paramStruct), nil
 }
