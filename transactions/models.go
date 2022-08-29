@@ -18,16 +18,19 @@ func (model *TransactionModel) TableName() string {
 type TransactionModel struct {
 	gorm.Model
 	UserID     uint
+	TypeID     int
 	ReceiverId uint `gorm:"default: null"`
 	SenderId   uint `gorm:"default: null"`
 	Amount     uint32
 	Date       time.Time
-	Operation  string
 }
 
 func AutoMigrate() {
 	db := common.GetDB()
-	db.AutoMigrate(&TransactionModel{})
+	err := db.AutoMigrate(&TransactionModel{})
+	if err != nil {
+		return
+	}
 }
 
 // 	Получаем транзакции пользователя

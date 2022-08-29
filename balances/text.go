@@ -1,12 +1,8 @@
 package balances
 
-const subOperationText = "Ушло"
 const subSuccessText = "Баланс убавлен"
-const addOperationText = "Пришло"
 const addSuccessText = "Баланс прибавлен"
 const exchangeSuccessText = "Отправка прошла успешно"
-const sendToOperationText = "Отправлено пользователю"
-const receiveFromOperationText = "Получено от пользователя"
 
 const userNotFoundMessage = "пользователь не найден"
 const notManyMessage = "сумма вычета превышает баланс"

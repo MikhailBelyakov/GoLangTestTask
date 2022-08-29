@@ -33,10 +33,10 @@ func Sub(paramStruct ChangeParamStruct) (string, int, error) {
 	}
 
 	model := transactions.TransactionModel{
-		UserID:    paramStruct.userId,
-		Amount:    uint32(paramStruct.amount * 100),
-		Operation: subOperationText,
-		Date:      time.Now(),
+		UserID: paramStruct.userId,
+		Amount: uint32(paramStruct.amount * 100),
+		TypeID: transactions.SubTypeTransaction,
+		Date:   time.Now(),
 	}
 
 	if err = transactions.CreateTransaction(model); err != nil {
@@ -62,10 +62,10 @@ func Add(paramStruct ChangeParamStruct) (string, int, error) {
 	}
 
 	model := transactions.TransactionModel{
-		UserID:    paramStruct.userId,
-		Amount:    uint32(paramStruct.amount * 100),
-		Operation: addOperationText,
-		Date:      time.Now(),
+		UserID: paramStruct.userId,
+		Amount: uint32(paramStruct.amount * 100),
+		TypeID: transactions.AddTypeTransaction,
+		Date:   time.Now(),
 	}
 
 	if err = transactions.CreateTransaction(model); err != nil {
@@ -106,7 +106,7 @@ func ExchangeBetweenUsers(inputParam ExchangeParamStruct) (string, int, error) {
 		SenderId:   inputParam.senderId,
 		ReceiverId: inputParam.receiverId,
 		Amount:     uint32(inputParam.amount * 100),
-		Operation:  sendToOperationText,
+		TypeID:     transactions.SendToTypeTransaction,
 		Date:       time.Now(),
 	}
 	receiverTransactionModel := transactions.TransactionModel{
@@ -114,7 +114,7 @@ func ExchangeBetweenUsers(inputParam ExchangeParamStruct) (string, int, error) {
 		SenderId:   inputParam.senderId,
 		ReceiverId: inputParam.receiverId,
 		Amount:     uint32(inputParam.amount * 100),
-		Operation:  receiveFromOperationText,
+		TypeID:     transactions.ReceiveFromTypeTransaction,
 		Date:       time.Now(),
 	}
 

@@ -19,10 +19,11 @@ type TransactionStruct struct {
 
 type TransactionResponse struct {
 	Amount     float64   `json:"amount"`
-	Operation  string    `json:"operation"`
+	Type       string    `json:"type"`
+	TypeId     int       `json:"typeId"`
 	Date       time.Time `json:"date"`
-	ReceiverId uint      `json:"receiver_id"`
-	SenderId   uint      `json:"sender_id"`
+	ReceiverId uint      `json:"receiverId"`
+	SenderId   uint      `json:"senderId"`
 }
 
 func (s *TransactionsStruct) Response() []TransactionResponse {
@@ -39,9 +40,12 @@ func (s *TransactionStruct) Response() TransactionResponse {
 	formatAmount := fmt.Sprintf("%.2f", float64(s.Amount)/100)
 	actualAmount, _ := strconv.ParseFloat(formatAmount, 64)
 
+	operationText, _ := GetLabel(s.TypeID)
+
 	response := TransactionResponse{
 		Amount:     actualAmount,
-		Operation:  s.Operation,
+		TypeId:     s.TypeID,
+		Type:       operationText,
 		ReceiverId: s.ReceiverId,
 		SenderId:   s.SenderId,
 		Date:       s.Date,
