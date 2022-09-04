@@ -1,15 +1,26 @@
 package transactions
 
-import (
-	"testGoProject/users"
-)
+import "github.com/gin-gonic/gin"
 
-func GetTransactionsByUser(paramStruct GetTransactionParamStruct) ([]TransactionModel, error) {
-	userModel, err := users.FindOneUser(&users.UserModel{ID: paramStruct.userId})
+type TransactionService interface {
+	GetTransactionsByUser(ctx *gin.Context, userID int, paramStruct GetTransactionParamStruct) ([]TransactionModel, error)
+}
 
+func NewTransactionService(repo TransactionRepository) TransactionService {
+	return &transactionsServiceImpl{
+		repo: repo,
+	}
+}
+
+type transactionsServiceImpl struct {
+	repo TransactionRepository
+}
+
+func (s *transactionsServiceImpl) GetTransactionsByUser(ctx *gin.Context, userID int, paramStruct GetTransactionParamStruct) ([]TransactionModel, error) {
+	transactions, err := s.repo.FindByUserID(ctx, userID, paramStruct)
 	if err != nil {
-		return []TransactionModel{}, err
+		return nil, err
 	}
 
-	return FindTransactionsByUser(userModel, paramStruct), nil
+	return transactions, nil
 }

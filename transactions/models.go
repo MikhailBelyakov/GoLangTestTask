@@ -1,15 +1,11 @@
 package transactions
 
 import (
-	"github.com/jinzhu/gorm"
-	"testGoProject/common"
-	"testGoProject/users"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"testProject/common"
 	"time"
 )
-
-type Tabler interface {
-	TableName() string
-}
 
 func (model *TransactionModel) TableName() string {
 	return "transactions"
@@ -19,34 +15,47 @@ type TransactionModel struct {
 	gorm.Model
 	UserID     uint
 	TypeID     int
-	ReceiverId uint `gorm:"default: null"`
-	SenderId   uint `gorm:"default: null"`
+	ReceiverID uint `gorm:"default: null"`
+	SenderID   uint `gorm:"default: null"`
 	Amount     uint32
 	Date       time.Time
 }
 
-func AutoMigrate() {
+func AutoMigrate() error {
 	db := common.GetDB()
 	err := db.AutoMigrate(&TransactionModel{})
 	if err != nil {
-		return
+		return err
 	}
+	return nil
 }
 
-// 	Получаем транзакции пользователя
-func FindTransactionsByUser(userModel users.UserModel, condition GetTransactionParamStruct) []TransactionModel {
-	var transactionModels []TransactionModel
-
-	db := common.GetDB()
-	db.Where(&TransactionModel{
-		UserID: userModel.ID,
-	}).Limit(condition.Limit).Order(condition.Order + " " + condition.Sort).Offset(condition.Offset).Find(&transactionModels)
-
-	return transactionModels
+type TransactionRepository interface {
+	FindByUserID(context *gin.Context, userID int, condition GetTransactionParamStruct) ([]TransactionModel, error)
+	CreateTransaction(context *gin.Context, model *TransactionModel) error
 }
 
-func CreateTransaction(model TransactionModel) error {
-	db := common.GetDB()
-	err := db.Save(&model).Error
+func NewTransactionRepository(db *gorm.DB) (TransactionRepository, error) {
+	return &transactionRepositoryImpl{
+		db: db,
+	}, nil
+}
+
+type transactionRepositoryImpl struct {
+	db *gorm.DB
+}
+
+func (r *transactionRepositoryImpl) CreateTransaction(ctx *gin.Context, model *TransactionModel) error {
+	err := r.db.WithContext(ctx).Save(&model).Error
 	return err
+}
+
+func (r *transactionRepositoryImpl) FindByUserID(ctx *gin.Context, userID int, condition GetTransactionParamStruct) ([]TransactionModel, error) {
+	var transaction []TransactionModel
+
+	r.db.WithContext(ctx).Where(&TransactionModel{
+		UserID: uint(userID),
+	}).Limit(condition.Limit).Order(condition.Order + " " + condition.Sort).Offset(condition.Offset).Find(&transaction)
+
+	return transaction, nil
 }

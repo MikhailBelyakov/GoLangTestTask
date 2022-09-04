@@ -3,28 +3,66 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"testGoProject/balances"
-	"testGoProject/common"
-	"testGoProject/transactions"
-	"testGoProject/users"
+	"github.com/joho/godotenv"
+	"log"
+	"sync"
+	"testProject/balances"
+	"testProject/common"
+	"testProject/transactions"
+	"testProject/users"
 )
 
 func Migrate() {
-	users.AutoMigrate()
-	balances.AutoMigrate()
-	transactions.AutoMigrate()
+
+	var err error
+
+	err = users.AutoMigrate()
+	err = balances.AutoMigrate()
+	err = transactions.AutoMigrate()
+
+	if err != nil {
+		log.Fatal("migration error", err)
+	}
 }
 
 func main() {
+
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	db := common.Init()
 	Migrate()
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
 	v1 := r.Group("/api")
-	balances.UserBalance(v1.Group("/balances"))
-	balances.UserChangeBalance(v1.Group("/balances"))
-	transactions.UserTransaction(v1.Group("/transactions"))
+
+	balanceRepo, err := balances.NewBalanceRepository(db)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	transactionRepo, err := transactions.NewTransactionRepository(db)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	mu := new(sync.Mutex)
+
+	balanceService := balances.NewBalanceService(mu, balanceRepo, transactionRepo)
+	transactionService := transactions.NewTransactionService(transactionRepo)
+
+	transactionController := transactions.NewTransactionController(transactionService)
+	balanceController := balances.NewBalanceController(balanceService)
+
+	balances.BalanceRoutes(v1.Group("/balances"), balanceController)
+
+	transactions.UserTransaction(v1.Group("/transactions"), transactionController)
 
 	tx1 := db.Begin()
 	userA := users.UserModel{

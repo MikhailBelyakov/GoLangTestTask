@@ -1,12 +1,9 @@
 package users
 
 import (
-	"testGoProject/common"
+	"github.com/gin-gonic/gin"
+	"testProject/common"
 )
-
-type Tabler interface {
-	TableName() string
-}
 
 func (c UserModel) TableName() string {
 	return "users"
@@ -17,15 +14,16 @@ type UserModel struct {
 	Username string `gorm:"column:username"`
 }
 
-func AutoMigrate() {
+func AutoMigrate() error {
 	db := common.GetDB()
 	err := db.AutoMigrate(&UserModel{})
 	if err != nil {
-		return
+		return err
 	}
+	return nil
 }
 
-func FindOneUser(condition interface{}) (UserModel, error) {
+func FindOneUser(context *gin.Context, condition interface{}) (UserModel, error) {
 	db := common.GetDB()
 	var model UserModel
 	err := db.Where(condition).First(&model).Error

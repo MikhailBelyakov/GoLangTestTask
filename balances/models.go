@@ -1,14 +1,11 @@
 package balances
 
 import (
-	"github.com/jinzhu/gorm"
-	"testGoProject/common"
-	"testGoProject/users"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"testProject/common"
+	"testProject/users"
 )
-
-type Tabler interface {
-	TableName() string
-}
 
 func (model *BalanceModel) TableName() string {
 	return "balances"
@@ -21,27 +18,40 @@ type BalanceModel struct {
 	Amount uint32 `json:"amount"`
 }
 
-func AutoMigrate() {
+func AutoMigrate() error {
 	db := common.GetDB()
 	err := db.AutoMigrate(&BalanceModel{})
 	if err != nil {
-		return
+		return err
 	}
+	return nil
 }
 
-func (model *BalanceModel) changeBalance(amount uint32) error {
-	db := common.GetDB()
-	err := db.Model(model).Update("amount", amount).Error
+type BalanceRepository interface {
+	UpdateBalance(context *gin.Context, balanceModel *BalanceModel) error
+	GetBalance(context *gin.Context, userID uint) BalanceModel
+}
+
+func NewBalanceRepository(db *gorm.DB) (BalanceRepository, error) {
+	return &balanceRepositoryImpl{
+		db: db,
+	}, nil
+}
+
+type balanceRepositoryImpl struct {
+	db *gorm.DB
+}
+
+func (repo balanceRepositoryImpl) UpdateBalance(ctx *gin.Context, balanceModel *BalanceModel) error {
+	err := repo.db.WithContext(ctx).Model(balanceModel).Update("amount", balanceModel.Amount).Error
 	return err
 }
 
-// 	Получаем баланс, если не найден - создаём.
-func GetBalance(userModel users.UserModel) BalanceModel {
+func (repo balanceRepositoryImpl) GetBalance(ctx *gin.Context, userID uint) BalanceModel {
 	var balanceModel BalanceModel
 
-	db := common.GetDB()
-	db.Select("id", "user_id", "amount").Where(&BalanceModel{
-		UserID: userModel.ID,
+	repo.db.WithContext(ctx).Select("id", "user_id", "amount").Where(&BalanceModel{
+		UserID: userID,
 	}).FirstOrCreate(&balanceModel)
 
 	return balanceModel

@@ -10,9 +10,13 @@ SHELL=/bin/bash -e
 ### Docker config ###
 #####################
 
-build-base:  ## Build docker image for nomad
-	@docker-compose build
+.PHONY: help
+help: ## Show this message
+	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: build
+build:  ## Build docker image
+	@docker-compose build
 
 .PHONY: start
 start: ## Run containers

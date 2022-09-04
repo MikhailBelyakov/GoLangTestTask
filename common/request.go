@@ -16,9 +16,7 @@ type SortStruct struct {
 
 func sortMethods() map[string]bool {
 	return map[string]bool{
-		"asc":  true,
 		"ASC":  true,
-		"desc": true,
 		"DESC": true,
 	}
 }
@@ -30,8 +28,9 @@ func (sortStruct *SortStruct) BindParam(context *gin.Context) {
 	if len(orderSplit) > 1 {
 		sortStruct.Order = orderSplit[0]
 
-		if _, inMap := sortMethods()[orderSplit[1]]; !inMap {
+		if _, inMap := sortMethods()[strings.ToUpper(orderSplit[1])]; !inMap {
 			sortStruct.Sort = defaultSortMethod
+			return
 		}
 
 		sortStruct.Sort = orderSplit[1]

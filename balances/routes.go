@@ -3,104 +3,113 @@ package balances
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"testGoProject/users"
+	"testProject/users"
 )
 
-func UserBalance(router *gin.RouterGroup) {
-	router.GET("/:userId", getUserBalance)
+func BalanceRoutes(router *gin.RouterGroup, controller BalanceController) {
+	router.GET("/:userID", controller.GetUserBalance)
+	router.POST("/:userID/sub", controller.SubBalance)
+	router.POST("/:userID/add", controller.AddBalance)
+	router.POST("/:userID/sendTo/:receiverID", controller.Exchange)
 }
 
-func UserChangeBalance(router *gin.RouterGroup) {
-	router.POST("/:userId/add", addBalance)
-	router.POST("/:userId/sub", subBalance)
-	router.POST("/:userId/sendTo/:receiverId", exchange)
+type BalanceController interface {
+	GetUserBalance(ctx *gin.Context)
+	SubBalance(ctx *gin.Context)
+	AddBalance(ctx *gin.Context)
+	Exchange(ctx *gin.Context)
 }
 
-type CurrenciesStruct struct {
-	Rates map[string]float64 `json:"rates"`
+func NewBalanceController(service BalanceService) BalanceController {
+	return &balanceControllerImpl{
+		service: service,
+	}
 }
 
-func getUserBalance(context *gin.Context) {
+type balanceControllerImpl struct {
+	service BalanceService
+}
+
+func (b balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 	var inputParam GetBalanceParamStruct
 
-	err := inputParam.BindGetBalanceParams(context)
+	err := inputParam.BindGetBalanceParams(ctx)
 
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
 		return
 	}
 
 	response := new(BalanceResponse)
 
-	err = GetBalanceByUser(inputParam, response)
+	err = b.service.GetBalanceByUser(ctx, &inputParam, response)
 
 	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{"message": users.UserNotFoundMessage})
+		ctx.JSON(http.StatusNotFound, gin.H{"message": users.UserNotFoundMessage})
 		return
 	}
 
-	context.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, response)
 }
 
-func subBalance(context *gin.Context) {
+func (b balanceControllerImpl) SubBalance(ctx *gin.Context) {
 	var inputParam ChangeParamStruct
 
-	err := inputParam.BindChangeParams(context)
+	err := inputParam.BindChangeParams(ctx)
 
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
 		return
 	}
 
-	message, httpStatus, err := Sub(inputParam)
+	message, httpStatus, err := b.service.Sub(ctx, &inputParam)
 
 	if err != nil {
-		context.JSON(httpStatus, gin.H{"message": message})
+		ctx.JSON(httpStatus, gin.H{"message": message})
 		return
 	}
 
-	context.JSON(httpStatus, gin.H{"message": message})
+	ctx.JSON(httpStatus, gin.H{"message": message})
 	return
 }
 
-func addBalance(context *gin.Context) {
+func (b balanceControllerImpl) AddBalance(ctx *gin.Context) {
 	var inputParam ChangeParamStruct
 
-	err := inputParam.BindChangeParams(context)
+	err := inputParam.BindChangeParams(ctx)
 
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
 		return
 	}
 
-	message, httpStatus, err := Add(inputParam)
+	message, httpStatus, err := b.service.Add(ctx, &inputParam)
 
 	if err != nil {
-		context.JSON(httpStatus, gin.H{"message": message})
+		ctx.JSON(httpStatus, gin.H{"message": message})
 		return
 	}
 
-	context.JSON(httpStatus, gin.H{"message": message})
+	ctx.JSON(httpStatus, gin.H{"message": message})
 	return
 }
 
-func exchange(context *gin.Context) {
+func (b balanceControllerImpl) Exchange(ctx *gin.Context) {
 	var inputParam ExchangeParamStruct
 
-	err := inputParam.BindExchangeParams(context)
+	err := inputParam.BindExchangeParams(ctx)
 
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		return
+	}
+	message, httpStatus, err := b.service.ExchangeBetweenUsers(ctx, &inputParam)
+
+	if err != nil {
+		ctx.JSON(httpStatus, gin.H{"message": message})
 		return
 	}
 
-	message, httpStatus, err := ExchangeBetweenUsers(inputParam)
-
-	if err != nil {
-		context.JSON(httpStatus, gin.H{"message": message})
-		return
-	}
-
-	context.JSON(httpStatus, gin.H{"message": message})
+	ctx.JSON(httpStatus, gin.H{"message": message})
 	return
 }

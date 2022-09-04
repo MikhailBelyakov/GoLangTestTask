@@ -6,75 +6,75 @@ import (
 )
 
 type ExchangeParamStruct struct {
-	senderId   uint
-	receiverId uint
+	senderID   uint
+	receiverID uint
 	amount     float64
 }
 
 func (input *ExchangeParamStruct) BindExchangeParams(context *gin.Context) error {
 	var err error
 
-	senderIdString := context.Param("userId")
-	receiverIdString := context.Param("receiverId")
+	senderIDString := context.Param("userID")
+	receiverIDString := context.Param("receiverID")
 	amountParam := context.PostForm("amount")
 
-	senderId, err := strconv.ParseUint(senderIdString, 10, 32)
-	receiverId, err := strconv.ParseUint(receiverIdString, 10, 32)
+	senderID, err := strconv.ParseUint(senderIDString, 10, 32)
+	receiverID, err := strconv.ParseUint(receiverIDString, 10, 32)
 	amount, err := strconv.ParseFloat(amountParam, 64)
 
 	if err != nil {
 		return err
 	}
 
-	input.senderId = uint(senderId)
-	input.receiverId = uint(receiverId)
+	input.senderID = uint(senderID)
+	input.receiverID = uint(receiverID)
 	input.amount = amount
 
 	return nil
 }
 
 type ChangeParamStruct struct {
-	userId uint
+	userID uint
 	amount float64
 }
 
 func (input *ChangeParamStruct) BindChangeParams(context *gin.Context) error {
 	var err error
 
-	userIdString := context.Param("userId")
+	userIDString := context.Param("userID")
 	amountParam := context.PostForm("amount")
 
-	userId, err := strconv.ParseUint(userIdString, 10, 32)
+	userID, err := strconv.ParseUint(userIDString, 10, 32)
 	amount, err := strconv.ParseFloat(amountParam, 64)
 
 	if err != nil {
 		return err
 	}
 
-	input.userId = uint(userId)
+	input.userID = uint(userID)
 	input.amount = amount
 
 	return nil
 }
 
 type GetBalanceParamStruct struct {
-	userId   uint
+	userID   uint
 	currency string
 }
 
 func (input *GetBalanceParamStruct) BindGetBalanceParams(context *gin.Context) error {
 	var err error
 
-	userIdString := context.Param("userId")
+	userIDString := context.Param("userID")
 	currency := context.Query("currency")
 
-	userId, err := strconv.ParseInt(userIdString, 10, 32)
+	userID, err := strconv.ParseInt(userIDString, 10, 32)
 
 	if err != nil {
 		return err
 	}
 
-	input.userId = uint(userId)
+	input.userID = uint(userID)
 	input.currency = currency
 
 	return nil

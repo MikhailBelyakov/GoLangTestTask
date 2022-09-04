@@ -4,12 +4,12 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"testGoProject/common"
-	"testGoProject/users"
+	"testProject/common"
+	"testProject/users"
 )
 
 type GetTransactionParamStruct struct {
-	userId uint
+	userID uint
 	common.SortStruct
 	common.PaginateStruct
 }
@@ -27,9 +27,9 @@ func (input *GetTransactionParamStruct) BindParam(context *gin.Context) error {
 	input.PaginateStruct.BindParam(context)
 	input.SortStruct.BindParam(context)
 
-	userIdString := context.Param("userId")
+	userIDString := context.Param("userID")
 
-	userId, err := strconv.ParseUint(userIdString, 10, 32)
+	userID, err := strconv.ParseUint(userIDString, 10, 32)
 
 	if err != nil {
 		return errors.New(users.UserNotAvailableParamMessage)
@@ -39,7 +39,7 @@ func (input *GetTransactionParamStruct) BindParam(context *gin.Context) error {
 		return errors.New(common.SortFieldErrorMessage)
 	}
 
-	input.userId = uint(userId)
+	input.userID = uint(userID)
 
 	return nil
 }

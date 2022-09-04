@@ -2,7 +2,7 @@ version: '3'
 
 services:
   db:
-    image: mysql:5.7
+    image: mysql:8.0.29
     volumes:
       - db_data:/var/lib/mysql
     restart: always
@@ -22,7 +22,7 @@ services:
     build: .
     ports:
       - "8080:8080"
-    # restart: always
+    restart: always
     environment:
       APP_DB_HOST: db:3306
       APP_DB_NAME: testing

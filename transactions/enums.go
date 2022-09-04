@@ -18,8 +18,8 @@ func Labels() map[int]string {
 	}
 }
 
-func GetLabel(typeId int) (string, error) {
-	if value, inMap := Labels()[typeId]; inMap {
+func GetLabel(typeID int) (string, error) {
+	if value, inMap := Labels()[typeID]; inMap {
 		return value, nil
 	}
 	return "", errors.New("enum val not found")

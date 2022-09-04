@@ -9,3 +9,4 @@ const notManyForSendMessage = "недостаточно средств для о
 const notFoundSenderMessage = "отправитель не найден"
 const notFoundReceiverMessage = "получатель не найден"
 const incorrectParamMessage = "некорректный параметр"
+const selfSendErrorMessage = "отравитель не может быть получателем"

@@ -1,9 +1,7 @@
-FROM golang
+FROM golang:1.13
 ADD . /go/src
 WORKDIR /go/src
 
-RUN go get github.com/go-sql-driver/mysql
-RUN go get github.com/gorilla/mux
 RUN go build -o bin/main  main.go
 RUN git clone https://github.com/vishnubob/wait-for-it.git
 
