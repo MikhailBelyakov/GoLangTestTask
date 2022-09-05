@@ -30,7 +30,7 @@ type balanceControllerImpl struct {
 	service BalanceService
 }
 
-func (b balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
+func (controller balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 	var inputParam GetBalanceParamStruct
 
 	err := inputParam.BindGetBalanceParams(ctx)
@@ -42,7 +42,7 @@ func (b balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 
 	response := new(BalanceResponse)
 
-	err = b.service.GetBalanceByUser(ctx, &inputParam, response)
+	err = controller.service.GetBalanceByUser(ctx, &inputParam, response)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": users.UserNotFoundMessage})
@@ -52,7 +52,7 @@ func (b balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-func (b balanceControllerImpl) SubBalance(ctx *gin.Context) {
+func (controller balanceControllerImpl) SubBalance(ctx *gin.Context) {
 	var inputParam ChangeParamStruct
 
 	err := inputParam.BindChangeParams(ctx)
@@ -62,7 +62,7 @@ func (b balanceControllerImpl) SubBalance(ctx *gin.Context) {
 		return
 	}
 
-	message, httpStatus, err := b.service.Sub(ctx, &inputParam)
+	message, httpStatus, err := controller.service.Sub(ctx, &inputParam)
 
 	if err != nil {
 		ctx.JSON(httpStatus, gin.H{"message": message})
@@ -73,7 +73,7 @@ func (b balanceControllerImpl) SubBalance(ctx *gin.Context) {
 	return
 }
 
-func (b balanceControllerImpl) AddBalance(ctx *gin.Context) {
+func (controller balanceControllerImpl) AddBalance(ctx *gin.Context) {
 	var inputParam ChangeParamStruct
 
 	err := inputParam.BindChangeParams(ctx)
@@ -83,7 +83,7 @@ func (b balanceControllerImpl) AddBalance(ctx *gin.Context) {
 		return
 	}
 
-	message, httpStatus, err := b.service.Add(ctx, &inputParam)
+	message, httpStatus, err := controller.service.Add(ctx, &inputParam)
 
 	if err != nil {
 		ctx.JSON(httpStatus, gin.H{"message": message})
@@ -94,7 +94,7 @@ func (b balanceControllerImpl) AddBalance(ctx *gin.Context) {
 	return
 }
 
-func (b balanceControllerImpl) Exchange(ctx *gin.Context) {
+func (controller balanceControllerImpl) Exchange(ctx *gin.Context) {
 	var inputParam ExchangeParamStruct
 
 	err := inputParam.BindExchangeParams(ctx)
@@ -103,7 +103,7 @@ func (b balanceControllerImpl) Exchange(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
 		return
 	}
-	message, httpStatus, err := b.service.ExchangeBetweenUsers(ctx, &inputParam)
+	message, httpStatus, err := controller.service.ExchangeBetweenUsers(ctx, &inputParam)
 
 	if err != nil {
 		ctx.JSON(httpStatus, gin.H{"message": message})

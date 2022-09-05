@@ -45,15 +45,15 @@ type transactionRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func (r *transactionRepositoryImpl) CreateTransaction(ctx *gin.Context, model *TransactionModel) error {
-	err := r.db.WithContext(ctx).Save(&model).Error
+func (repo *transactionRepositoryImpl) CreateTransaction(ctx *gin.Context, model *TransactionModel) error {
+	err := repo.db.WithContext(ctx).Save(&model).Error
 	return err
 }
 
-func (r *transactionRepositoryImpl) FindByUserID(ctx *gin.Context, userID int, condition GetTransactionParamStruct) ([]TransactionModel, error) {
+func (repo *transactionRepositoryImpl) FindByUserID(ctx *gin.Context, userID int, condition GetTransactionParamStruct) ([]TransactionModel, error) {
 	var transaction []TransactionModel
 
-	r.db.WithContext(ctx).Where(&TransactionModel{
+	repo.db.WithContext(ctx).Where(&TransactionModel{
 		UserID: uint(userID),
 	}).Limit(condition.Limit).Order(condition.Order + " " + condition.Sort).Offset(condition.Offset).Find(&transaction)
 

@@ -16,8 +16,8 @@ type transactionsServiceImpl struct {
 	repo TransactionRepository
 }
 
-func (s *transactionsServiceImpl) GetTransactionsByUser(ctx *gin.Context, userID int, paramStruct GetTransactionParamStruct) ([]TransactionModel, error) {
-	transactions, err := s.repo.FindByUserID(ctx, userID, paramStruct)
+func (service *transactionsServiceImpl) GetTransactionsByUser(ctx *gin.Context, userID int, paramStruct GetTransactionParamStruct) ([]TransactionModel, error) {
+	transactions, err := service.repo.FindByUserID(ctx, userID, paramStruct)
 	if err != nil {
 		return nil, err
 	}
