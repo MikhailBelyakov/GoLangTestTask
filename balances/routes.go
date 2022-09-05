@@ -3,7 +3,7 @@ package balances
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"testProject/users"
+	"testProject/common"
 )
 
 func BalanceRoutes(router *gin.RouterGroup, controller BalanceController) {
@@ -32,11 +32,12 @@ type balanceControllerImpl struct {
 
 func (controller balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 	var inputParam GetBalanceParamStruct
+	var err common.HttpError
 
-	err := inputParam.BindGetBalanceParams(ctx)
+	err = inputParam.BindGetBalanceParams(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.HttpCode()})
 		return
 	}
 
@@ -45,7 +46,7 @@ func (controller balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 	err = controller.service.GetBalanceByUser(ctx, &inputParam, response)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"message": users.UserNotFoundMessage})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
@@ -54,62 +55,65 @@ func (controller balanceControllerImpl) GetUserBalance(ctx *gin.Context) {
 
 func (controller balanceControllerImpl) SubBalance(ctx *gin.Context) {
 	var inputParam ChangeParamStruct
+	var err common.HttpError
 
-	err := inputParam.BindChangeParams(ctx)
+	err = inputParam.BindChangeParams(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
-	message, httpStatus, err := controller.service.Sub(ctx, &inputParam)
+	err = controller.service.Sub(ctx, &inputParam)
 
 	if err != nil {
-		ctx.JSON(httpStatus, gin.H{"message": message})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
-	ctx.JSON(httpStatus, gin.H{"message": message})
+	ctx.JSON(http.StatusOK, gin.H{"message": subSuccessText})
 	return
 }
 
 func (controller balanceControllerImpl) AddBalance(ctx *gin.Context) {
 	var inputParam ChangeParamStruct
+	var err common.HttpError
 
-	err := inputParam.BindChangeParams(ctx)
+	err = inputParam.BindChangeParams(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
-	message, httpStatus, err := controller.service.Add(ctx, &inputParam)
+	err = controller.service.Add(ctx, &inputParam)
 
 	if err != nil {
-		ctx.JSON(httpStatus, gin.H{"message": message})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
-	ctx.JSON(httpStatus, gin.H{"message": message})
+	ctx.JSON(http.StatusOK, gin.H{"message": addSuccessText})
 	return
 }
 
 func (controller balanceControllerImpl) Exchange(ctx *gin.Context) {
 	var inputParam ExchangeParamStruct
+	var err common.HttpError
 
-	err := inputParam.BindExchangeParams(ctx)
-
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": incorrectParamMessage})
-		return
-	}
-	message, httpStatus, err := controller.service.ExchangeBetweenUsers(ctx, &inputParam)
+	err = inputParam.BindExchangeParams(ctx)
 
 	if err != nil {
-		ctx.JSON(httpStatus, gin.H{"message": message})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
+		return
+	}
+	err = controller.service.ExchangeBetweenUsers(ctx, &inputParam)
+
+	if err != nil {
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
-	ctx.JSON(httpStatus, gin.H{"message": message})
+	ctx.JSON(http.StatusOK, gin.H{"message": exchangeSuccessText})
 	return
 }

@@ -3,6 +3,7 @@ package transactions
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"testProject/common"
 	"testProject/users"
 )
 
@@ -27,18 +28,19 @@ type transactionControllerImpl struct {
 func (controller *transactionControllerImpl) GetUserTransaction(ctx *gin.Context) {
 	var inputParamStruct GetTransactionParamStruct
 	var transactions []TransactionModel
+	var err common.HttpError
 
-	err := inputParamStruct.BindParam(ctx)
+	err = inputParamStruct.BindParam(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.JSON(err.HttpCode(), gin.H{"message": err.Error()})
 		return
 	}
 
 	transactions, err = controller.service.GetTransactionsByUser(ctx, int(inputParamStruct.userID), inputParamStruct)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"message": users.UserNotFoundMessage})
+		ctx.JSON(err.HttpCode(), gin.H{"message": users.UserNotFoundMessage})
 		return
 	}
 

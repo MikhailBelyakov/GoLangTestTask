@@ -15,16 +15,15 @@ import (
 	"time"
 )
 
-const exchangeUrl = "https://www.cbr-xml-daily.ru/latest.js"
+const currencyUrl = "https://www.cbr-xml-daily.ru/latest.js"
 const defaultVal = "RUB"
+const currencyConnectTimeOut = 500
 
 type BalanceService interface {
-	Sub(ctx *gin.Context, paramStruct *ChangeParamStruct) (string, int, error)
-	Add(ctx *gin.Context, paramStruct *ChangeParamStruct) (string, int, error)
-	ExchangeBetweenUsers(ctx *gin.Context, inputParam *ExchangeParamStruct) (string, int, error)
-	GetBalanceByUser(ctx *gin.Context, inputParam *GetBalanceParamStruct, responseStruct *BalanceResponse) error
-	/*getBalance(ctx *gin.Context, userID uint, model *BalanceModel) error
-	getCurrency(ctx *gin.Context, currency string, currencyChanel chan<- float64)*/
+	Sub(ctx *gin.Context, paramStruct *ChangeParamStruct) common.HttpError
+	Add(ctx *gin.Context, paramStruct *ChangeParamStruct) common.HttpError
+	ExchangeBetweenUsers(ctx *gin.Context, inputParam *ExchangeParamStruct) common.HttpError
+	GetBalanceByUser(ctx *gin.Context, inputParam *GetBalanceParamStruct, responseStruct *BalanceResponse) common.HttpError
 }
 
 func NewBalanceService(mu *sync.Mutex, balanceRepo BalanceRepository, transactionRepo transactions.TransactionRepository) BalanceService {
@@ -41,20 +40,20 @@ type balanceServiceImpl struct {
 	transactionRepo transactions.TransactionRepository
 }
 
-func (service *balanceServiceImpl) Sub(ctx *gin.Context, paramStruct *ChangeParamStruct) (string, int, error) {
-	defer service.mu.Unlock()
+func (service *balanceServiceImpl) Sub(ctx *gin.Context, paramStruct *ChangeParamStruct) common.HttpError {
 	service.mu.Lock()
+	defer service.mu.Unlock()
 
 	var balanceModel = new(BalanceModel)
 
 	err := service.getBalance(ctx, paramStruct.userID, balanceModel)
 
 	if err != nil {
-		return users.UserNotFoundMessage, http.StatusNotFound, err
+		return common.NewHttpError(http.StatusNotFound, errors.New(users.UserNotFoundMessage))
 	}
 
 	if uint32(paramStruct.amount*100) > balanceModel.Amount {
-		return notManyMessage, http.StatusBadRequest, errors.New(notManyMessage)
+		return common.NewHttpError(http.StatusBadRequest, errors.New(notManyMessage))
 	}
 
 	newBalance := balanceModel.Amount - uint32(paramStruct.amount*100)
@@ -64,7 +63,7 @@ func (service *balanceServiceImpl) Sub(ctx *gin.Context, paramStruct *ChangePara
 
 	if err = service.balanceRepo.UpdateBalance(ctx, balanceModel); err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 
 	newTransactionModel := transactions.TransactionModel{
@@ -76,22 +75,22 @@ func (service *balanceServiceImpl) Sub(ctx *gin.Context, paramStruct *ChangePara
 
 	if err = service.transactionRepo.CreateTransaction(ctx, &newTransactionModel); err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 	tx.Commit()
-	return subSuccessText, http.StatusOK, nil
+	return nil
 }
 
-func (service *balanceServiceImpl) Add(ctx *gin.Context, paramStruct *ChangeParamStruct) (string, int, error) {
-	defer service.mu.Unlock()
+func (service *balanceServiceImpl) Add(ctx *gin.Context, paramStruct *ChangeParamStruct) common.HttpError {
 	service.mu.Lock()
+	defer service.mu.Unlock()
 
 	var balanceModel = new(BalanceModel)
 
 	err := service.getBalance(ctx, paramStruct.userID, balanceModel)
 
 	if err != nil {
-		return users.UserNotFoundMessage, http.StatusNotFound, err
+		return common.NewHttpError(http.StatusNotFound, errors.New(users.UserNotFoundMessage))
 	}
 
 	newBalance := balanceModel.Amount + uint32(paramStruct.amount*100)
@@ -101,7 +100,7 @@ func (service *balanceServiceImpl) Add(ctx *gin.Context, paramStruct *ChangePara
 
 	if err = service.balanceRepo.UpdateBalance(ctx, balanceModel); err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 
 	newTransactionModel := transactions.TransactionModel{
@@ -113,37 +112,38 @@ func (service *balanceServiceImpl) Add(ctx *gin.Context, paramStruct *ChangePara
 
 	if err = service.transactionRepo.CreateTransaction(ctx, &newTransactionModel); err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 	tx.Commit()
-	return addSuccessText, http.StatusOK, nil
+	return nil
 }
 
-func (service *balanceServiceImpl) ExchangeBetweenUsers(ctx *gin.Context, inputParam *ExchangeParamStruct) (string, int, error) {
-	defer service.mu.Unlock()
+func (service *balanceServiceImpl) ExchangeBetweenUsers(ctx *gin.Context, inputParam *ExchangeParamStruct) common.HttpError {
 	service.mu.Lock()
+	defer service.mu.Unlock()
 
 	var senderBalanceModel, receiverBalanceModel = new(BalanceModel), new(BalanceModel)
 	var err error
 
 	if inputParam.receiverID == inputParam.senderID {
-		return selfSendErrorMessage, http.StatusBadRequest, errors.New(selfSendErrorMessage)
+		return common.NewHttpError(http.StatusBadRequest, errors.New(selfSendErrorMessage))
 	}
 
 	err = service.getBalance(ctx, inputParam.senderID, senderBalanceModel)
 
 	if err != nil {
-		return notFoundSenderMessage, http.StatusNotFound, err
+		return common.NewHttpError(http.StatusNotFound, errors.New(notFoundSenderMessage))
 	}
 
 	err = service.getBalance(ctx, inputParam.receiverID, receiverBalanceModel)
 
 	if err != nil {
-		return notFoundReceiverMessage, http.StatusNotFound, err
+
+		return common.NewHttpError(http.StatusNotFound, errors.New(notFoundReceiverMessage))
 	}
 
 	if uint32(inputParam.amount*100) > senderBalanceModel.Amount {
-		return notManyForSendMessage, http.StatusBadRequest, errors.New(notManyForSendMessage)
+		return common.NewHttpError(http.StatusBadRequest, errors.New(notManyForSendMessage))
 	}
 
 	newSenderBalance := senderBalanceModel.Amount - uint32(inputParam.amount*100)
@@ -157,12 +157,12 @@ func (service *balanceServiceImpl) ExchangeBetweenUsers(ctx *gin.Context, inputP
 	err = service.balanceRepo.UpdateBalance(ctx, senderBalanceModel)
 	if err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 	err = service.balanceRepo.UpdateBalance(ctx, receiverBalanceModel)
 	if err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 
 	senderTransactionModel := transactions.TransactionModel{
@@ -185,20 +185,20 @@ func (service *balanceServiceImpl) ExchangeBetweenUsers(ctx *gin.Context, inputP
 	err = service.transactionRepo.CreateTransaction(ctx, &senderTransactionModel)
 	if err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 	err = service.transactionRepo.CreateTransaction(ctx, &receiverTransactionModel)
 	if err != nil {
 		tx.Rollback()
-		return err.Error(), http.StatusInternalServerError, err
+		return common.NewHttpError(http.StatusInternalServerError, err)
 	}
 
 	tx.Commit()
 
-	return exchangeSuccessText, http.StatusOK, nil
+	return nil
 }
 
-func (service *balanceServiceImpl) GetBalanceByUser(ctx *gin.Context, inputParam *GetBalanceParamStruct, responseStruct *BalanceResponse) error {
+func (service *balanceServiceImpl) GetBalanceByUser(ctx *gin.Context, inputParam *GetBalanceParamStruct, responseStruct *BalanceResponse) common.HttpError {
 	var currencyChanel = make(chan float64, 1)
 	var balanceModel = new(BalanceModel)
 
@@ -207,7 +207,7 @@ func (service *balanceServiceImpl) GetBalanceByUser(ctx *gin.Context, inputParam
 	err := service.getBalance(ctx, inputParam.userID, balanceModel)
 
 	if err != nil {
-		return err
+		return common.NewHttpError(http.StatusNotFound, errors.New(users.UserNotFoundMessage))
 	}
 
 	currencyFactor := <-currencyChanel
@@ -232,7 +232,6 @@ type CurrenciesStruct struct {
 }
 
 func (service *balanceServiceImpl) getCurrency(ctx *gin.Context, currency string, currencyChanel chan<- float64) {
-
 	defer func() {
 		if r := recover(); r != nil {
 			currencyChanel <- 1
@@ -245,10 +244,10 @@ func (service *balanceServiceImpl) getCurrency(ctx *gin.Context, currency string
 	if currency != "" {
 		var currenciesStruct CurrenciesStruct
 
-		timeoutCtx, cancel := context.WithTimeout(ctx.Request.Context(), 300*time.Millisecond)
+		timeoutCtx, cancel := context.WithTimeout(ctx.Request.Context(), currencyConnectTimeOut*time.Millisecond)
 		defer cancel()
 
-		req, _ := http.NewRequest(http.MethodGet, exchangeUrl, nil)
+		req, _ := http.NewRequest(http.MethodGet, currencyUrl, nil)
 
 		client := &http.Client{}
 		resp, err := client.Do(req.WithContext(timeoutCtx))

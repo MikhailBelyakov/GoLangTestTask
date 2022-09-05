@@ -3,6 +3,7 @@ package transactions
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strconv"
 	"testProject/common"
 	"testProject/users"
@@ -21,7 +22,7 @@ func orderFieldAllow() map[string]bool {
 	}
 }
 
-func (input *GetTransactionParamStruct) BindParam(context *gin.Context) error {
+func (input *GetTransactionParamStruct) BindParam(context *gin.Context) common.HttpError {
 	var err error
 
 	input.PaginateStruct.BindParam(context)
@@ -32,11 +33,11 @@ func (input *GetTransactionParamStruct) BindParam(context *gin.Context) error {
 	userID, err := strconv.ParseUint(userIDString, 10, 32)
 
 	if err != nil {
-		return errors.New(users.UserNotAvailableParamMessage)
+		return common.NewHttpError(http.StatusBadRequest, errors.New(users.UserNotAvailableParamMessage))
 	}
 
 	if _, inMap := orderFieldAllow()[input.Order]; !inMap {
-		return errors.New(common.SortFieldErrorMessage)
+		return common.NewHttpError(http.StatusBadRequest, errors.New(common.SortFieldErrorMessage))
 	}
 
 	input.userID = uint(userID)

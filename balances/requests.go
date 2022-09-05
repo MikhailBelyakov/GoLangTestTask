@@ -1,8 +1,11 @@
 package balances
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strconv"
+	"testProject/common"
 )
 
 type ExchangeParamStruct struct {
@@ -11,7 +14,7 @@ type ExchangeParamStruct struct {
 	amount     float64
 }
 
-func (input *ExchangeParamStruct) BindExchangeParams(context *gin.Context) error {
+func (input *ExchangeParamStruct) BindExchangeParams(context *gin.Context) common.HttpError {
 	var err error
 
 	senderIDString := context.Param("userID")
@@ -23,7 +26,7 @@ func (input *ExchangeParamStruct) BindExchangeParams(context *gin.Context) error
 	amount, err := strconv.ParseFloat(amountParam, 64)
 
 	if err != nil {
-		return err
+		return common.NewHttpError(http.StatusBadRequest, errors.New(incorrectParamMessage))
 	}
 
 	input.senderID = uint(senderID)
@@ -38,8 +41,7 @@ type ChangeParamStruct struct {
 	amount float64
 }
 
-func (input *ChangeParamStruct) BindChangeParams(context *gin.Context) error {
-	var err error
+func (input *ChangeParamStruct) BindChangeParams(context *gin.Context) common.HttpError {
 
 	userIDString := context.Param("userID")
 	amountParam := context.PostForm("amount")
@@ -48,7 +50,7 @@ func (input *ChangeParamStruct) BindChangeParams(context *gin.Context) error {
 	amount, err := strconv.ParseFloat(amountParam, 64)
 
 	if err != nil {
-		return err
+		return common.NewHttpError(http.StatusBadRequest, errors.New(incorrectParamMessage))
 	}
 
 	input.userID = uint(userID)
@@ -62,7 +64,7 @@ type GetBalanceParamStruct struct {
 	currency string
 }
 
-func (input *GetBalanceParamStruct) BindGetBalanceParams(context *gin.Context) error {
+func (input *GetBalanceParamStruct) BindGetBalanceParams(context *gin.Context) common.HttpError {
 	var err error
 
 	userIDString := context.Param("userID")
@@ -71,7 +73,7 @@ func (input *GetBalanceParamStruct) BindGetBalanceParams(context *gin.Context) e
 	userID, err := strconv.ParseInt(userIDString, 10, 32)
 
 	if err != nil {
-		return err
+		return common.NewHttpError(http.StatusBadRequest, errors.New(incorrectParamMessage))
 	}
 
 	input.userID = uint(userID)
