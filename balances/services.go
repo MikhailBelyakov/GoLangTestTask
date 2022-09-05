@@ -26,7 +26,7 @@ type BalanceService interface {
 	GetBalanceByUser(ctx *gin.Context, inputParam *GetBalanceParamStruct, responseStruct *BalanceResponse) common.HttpError
 }
 
-func NewBalanceService(mu *sync.Mutex, balanceRepo BalanceRepository, transactionRepo transactions.TransactionRepository) BalanceService {
+func NewBalanceService(mu *sync.RWMutex, balanceRepo BalanceRepository, transactionRepo transactions.TransactionRepository) BalanceService {
 	return &balanceServiceImpl{
 		mu:              mu,
 		balanceRepo:     balanceRepo,
@@ -35,7 +35,7 @@ func NewBalanceService(mu *sync.Mutex, balanceRepo BalanceRepository, transactio
 }
 
 type balanceServiceImpl struct {
-	mu              *sync.Mutex
+	mu              *sync.RWMutex
 	balanceRepo     BalanceRepository
 	transactionRepo transactions.TransactionRepository
 }

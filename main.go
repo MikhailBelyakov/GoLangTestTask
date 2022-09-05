@@ -52,7 +52,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	mu := new(sync.Mutex)
+	mu := new(sync.RWMutex)
 
 	balanceService := balances.NewBalanceService(mu, balanceRepo, transactionRepo)
 	transactionService := transactions.NewTransactionService(transactionRepo)
