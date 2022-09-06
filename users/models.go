@@ -1,7 +1,6 @@
 package users
 
 import (
-	"github.com/gin-gonic/gin"
 	"testProject/common"
 )
 
@@ -21,11 +20,4 @@ func AutoMigrate() error {
 		return err
 	}
 	return nil
-}
-
-func FindOneUser(context *gin.Context, condition interface{}) (UserModel, error) {
-	db := common.GetDB()
-	var model UserModel
-	err := db.Where(condition).First(&model).Error
-	return model, err
 }

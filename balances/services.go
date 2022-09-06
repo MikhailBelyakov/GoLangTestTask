@@ -26,18 +26,20 @@ type BalanceService interface {
 	GetBalanceByUser(ctx *gin.Context, inputParam *GetBalanceParamStruct, responseStruct *BalanceResponse) common.HttpError
 }
 
-func NewBalanceService(mu *sync.RWMutex, balanceRepo BalanceRepository, transactionRepo transactions.TransactionRepository) BalanceService {
-	return &balanceServiceImpl{
-		mu:              mu,
-		balanceRepo:     balanceRepo,
-		transactionRepo: transactionRepo,
-	}
-}
-
 type balanceServiceImpl struct {
 	mu              *sync.RWMutex
 	balanceRepo     BalanceRepository
 	transactionRepo transactions.TransactionRepository
+	userRepo        users.UserRepository
+}
+
+func NewBalanceService(mu *sync.RWMutex, balanceRepo BalanceRepository, transactionRepo transactions.TransactionRepository, userRepo users.UserRepository) BalanceService {
+	return &balanceServiceImpl{
+		mu:              mu,
+		balanceRepo:     balanceRepo,
+		transactionRepo: transactionRepo,
+		userRepo:        userRepo,
+	}
 }
 
 func (service *balanceServiceImpl) Sub(ctx *gin.Context, paramStruct *ChangeParamStruct) common.HttpError {
@@ -273,7 +275,7 @@ func (service *balanceServiceImpl) getCurrency(ctx *gin.Context, currency string
 
 func (service *balanceServiceImpl) getBalance(ctx *gin.Context, userID uint, model *BalanceModel) error {
 
-	userModel, err := users.FindOneUser(ctx, &users.UserModel{ID: userID})
+	userModel, err := service.userRepo.FindUser(ctx, &users.UserModel{ID: userID})
 
 	if err != nil {
 		return err

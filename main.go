@@ -17,7 +17,15 @@ func Migrate() {
 	var err error
 
 	err = users.AutoMigrate()
+	if err != nil {
+		log.Fatal("migration error", err)
+	}
+
 	err = balances.AutoMigrate()
+	if err != nil {
+		log.Fatal("migration error", err)
+	}
+
 	err = transactions.AutoMigrate()
 
 	if err != nil {
@@ -35,33 +43,24 @@ func main() {
 
 	db := common.Init()
 	Migrate()
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
 
 	v1 := r.Group("/api")
 
-	balanceRepo, err := balances.NewBalanceRepository(db)
-
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	transactionRepo, err := transactions.NewTransactionRepository(db)
-
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	balanceRepo := balances.NewBalanceRepository(db)
+	transactionRepo := transactions.NewTransactionRepository(db)
+	userRepo := users.NewUserRepository(db)
 
 	mu := new(sync.RWMutex)
 
-	balanceService := balances.NewBalanceService(mu, balanceRepo, transactionRepo)
+	balanceService := balances.NewBalanceService(mu, balanceRepo, transactionRepo, userRepo)
 	transactionService := transactions.NewTransactionService(transactionRepo)
 
-	transactionController := transactions.NewTransactionController(transactionService)
 	balanceController := balances.NewBalanceController(balanceService)
-
 	balances.BalanceRoutes(v1.Group("/balances"), balanceController)
 
+	transactionController := transactions.NewTransactionController(transactionService)
 	transactions.UserTransaction(v1.Group("/transactions"), transactionController)
 
 	tx1 := db.Begin()
